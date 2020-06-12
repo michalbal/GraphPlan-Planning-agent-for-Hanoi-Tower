@@ -88,13 +88,13 @@ class PlanGraphLevel(object):
         adds the pair (action1, action2) to the mutex set in the current action layer
         Note that an action is *not* mutex with itself
         """
-        current_layer_actions = self.action_layer.get_actions()
+        current_layer_actions = list(self.action_layer.get_actions())
 
         for i in range(len(current_layer_actions)):
             for j in range(i+1, len(current_layer_actions)):
                 if mutex_actions(current_layer_actions[i], current_layer_actions[j],
                                  previous_layer_mutex_proposition):
-                    self.actionLayer.add_mutex_actions(current_layer_actions[i],
+                    self.action_layer.add_mutex_actions(current_layer_actions[i],
                                                        current_layer_actions[j])
 
 
@@ -129,7 +129,7 @@ class PlanGraphLevel(object):
                     # If it doesn't exist let's create new instance for this level - maybe not needed, not sure how formed in the first place
                     added[res_proposition.name] = Proposition(res_proposition.name)
                     added[res_proposition.name].add_producer(action)
-                    
+
         # Finished going over all the propositions that will need to be in the layer, all have updated producer list
         for proposition in added.values():
             self.proposition_layer.add_proposition(proposition)
@@ -144,9 +144,17 @@ class PlanGraphLevel(object):
         self.proposition_layer.add_mutex_prop(prop1, prop2) adds the pair (prop1, prop2)
         to the mutex set of the current layer
         """
-        current_layer_propositions = self.proposition_layer.get_propositions()
+        current_layer_propositions = list(self.proposition_layer.get_propositions())
         current_layer_mutex_actions = self.action_layer.get_mutex_actions()
-        "*** YOUR CODE HERE ***"
+
+        for i in range(len(current_layer_propositions)):
+            for j in range (i+1, len(current_layer_propositions)):
+                if mutex_propositions(current_layer_propositions[i],
+                                      current_layer_propositions[j],
+                                      current_layer_mutex_actions):
+                    self.proposition_layer.add_mutex_prop(current_layer_propositions[i],
+                                                          current_layer_propositions[j])
+
 
     def expand(self, previous_layer):
         """
@@ -160,7 +168,17 @@ class PlanGraphLevel(object):
         previous_proposition_layer = previous_layer.get_proposition_layer()
         previous_layer_mutex_proposition = previous_proposition_layer.get_mutex_props()
 
-        "*** YOUR CODE HERE ***"
+        # Set action layer
+        self.update_action_layer(previous_proposition_layer)
+
+        # Update mutex actions
+        self.update_mutex_actions(previous_layer_mutex_proposition)
+
+        # Update propositional layer
+        self.update_proposition_layer()
+
+        self.update_mutex_proposition()
+
 
     def expand_without_mutex(self, previous_layer):
         """
