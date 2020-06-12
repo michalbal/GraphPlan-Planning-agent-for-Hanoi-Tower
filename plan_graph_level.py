@@ -145,7 +145,11 @@ def have_competing_needs(a1, a2, mutex_props):
     Hint: for propositions p  and q, the command  "Pair(p, q) in mutex_props"
           returns true if p and q are mutex in the previous level
     """
-    "*** YOUR CODE HERE ***"
+    for pre_a1 in a1.get_pre():
+        for pre_a2 in a2.get_pre():
+            if Pair(pre_a1, pre_a2) in mutex_props:
+                return False
+    return True
 
 
 def mutex_propositions(prop1, prop2, mutex_actions_list):
