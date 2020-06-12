@@ -114,6 +114,24 @@ def max_level(state, planning_problem):
     pg_init.set_proposition_layer(prop_layer_init)   #update the new plan graph level with the the proposition layer
     """
     "*** YOUR CODE HERE ***"
+    prop_layer_init = PropositionLayer()  # create a new proposition layer
+    for prop in state:
+        prop_layer_init.add_proposition(prop)
+    graph = PlanGraphLevel()
+    graph.set_proposition_layer(prop_layer_init)
+
+    lvl_number = 0
+    while True:
+        # check if reached goal
+        if planning_problem.is_goal_state(graph.get_proposition_layer().get_propositions()):
+            return lvl_number
+        # check if we are stuck
+        if is_fixed(graph, lvl_number):
+            return float('inf')
+        # otherwise, expand
+        prev = graph.get_proposition_layer()
+        graph.update_action_layer(prev)
+        graph.update_proposition_layer()
 
 
 
