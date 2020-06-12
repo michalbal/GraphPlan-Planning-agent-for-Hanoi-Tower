@@ -117,21 +117,23 @@ def max_level(state, planning_problem):
     prop_layer_init = PropositionLayer()  # create a new proposition layer
     for prop in state:
         prop_layer_init.add_proposition(prop)
-    graph = PlanGraphLevel()
-    graph.set_proposition_layer(prop_layer_init)
+    graph_layer = PlanGraphLevel()
+    graph_layer.set_proposition_layer(prop_layer_init)
 
+    graph = [graph_layer]
     lvl_number = 0
     while True:
         # check if reached goal
-        if planning_problem.is_goal_state(graph.get_proposition_layer().get_propositions()):
+        if planning_problem.is_goal_state(graph[-1].get_proposition_layer().get_propositions()):
             return lvl_number
         # check if we are stuck
         if is_fixed(graph, lvl_number):
             return float('inf')
         # otherwise, expand
-        prev = graph.get_proposition_layer()
-        graph.update_action_layer(prev)
-        graph.update_proposition_layer()
+        new_layer = PlanGraphLevel()
+        new_layer.expand_without_mutex(graph[-1])
+        graph.append(new_layer)
+        lvl_number += 1
 
 
 
@@ -141,6 +143,33 @@ def level_sum(state, planning_problem):
     If the goal is not reachable from the state your heuristic should return float('inf')
     """
     "*** YOUR CODE HERE ***"
+    prop_layer_init = PropositionLayer()  # create a new proposition layer
+    for prop in state:
+        prop_layer_init.add_proposition(prop)
+    graph_layer = PlanGraphLevel()
+    graph_layer.set_proposition_layer(prop_layer_init)
+
+    graph = [graph_layer]
+    sum_of_subgoals = 0
+    subgoals = list(planning_problem.goal)
+    while True:
+        this_lvl = len(graph) - 1
+        propositions = graph[-1].get_proposition_layer().get_propositions()
+        for sg in subgoals:
+            if sg in propositions:
+                sum_of_subgoals += this_lvl
+                subgoals.remove(sg)
+
+        # check if reached goal
+        if planning_problem.is_goal_state(propositions):
+            return sum_of_subgoals + this_lvl
+        # check if we are stuck
+        if is_fixed(graph, len(graph) - 1):
+            return float('inf')
+        # otherwise, expand
+        new_layer = PlanGraphLevel()
+        new_layer.expand_without_mutex(graph[-1])
+        graph.append(new_layer)
 
 
 def is_fixed(graph, level):
