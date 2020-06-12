@@ -58,7 +58,25 @@ class PlanGraphLevel(object):
         self.actionLayer.addAction(action) adds action to the current action layer
         """
         all_actions = PlanGraphLevel.actions
-        "*** YOUR CODE HERE ***"
+        # @TODO see if we need to check noOps action
+        for action in all_actions:
+
+            if not previous_proposition_layer.all_preconds_in_layer(action):
+                continue
+
+            # Checking if any of the preconditions are pairwise mutex
+            precons_list = action.get_pre()
+            no_conflicting_pre = True
+            for i in range(len(precons_list)):
+                for j in range(i+1, len(precons_list)):
+                    if previous_proposition_layer.is_mutex(precons_list[i], precons_list[j]):
+                        no_conflicting_pre = False
+                        break
+                if not no_conflicting_pre:
+                    break
+
+            if no_conflicting_pre:
+                self.action_layer.add_action(action)
 
     def update_mutex_actions(self, previous_layer_mutex_proposition):
         """
@@ -71,7 +89,14 @@ class PlanGraphLevel(object):
         Note that an action is *not* mutex with itself
         """
         current_layer_actions = self.action_layer.get_actions()
-        "*** YOUR CODE HERE ***"
+
+        for i in range(len(current_layer_actions)):
+            for j in range(i+1, len(current_layer_actions)):
+                if mutex_actions(current_layer_actions[i], current_layer_actions[j],
+                                 previous_layer_mutex_proposition):
+                    self.actionLayer.add_mutex_actions(current_layer_actions[i],
+                                                       current_layer_actions[j])
+
 
     def update_proposition_layer(self):
         """
@@ -88,7 +113,27 @@ class PlanGraphLevel(object):
 
         """
         current_layer_actions = self.action_layer.get_actions()
-        "*** YOUR CODE HERE ***"
+
+        # Create dict of existing propositions in the layer
+        added = dict()
+        for proposition in self.proposition_layer.get_propositions():
+            # As I understand it, there shouldn't be any here, but let's check because different behavior needed
+            added[proposition.name] = proposition
+
+        # Add new propositions or update producers list of existing propositions
+        for action in current_layer_actions:
+            for res_proposition in action.get_add():
+                if res_proposition.name in added:
+                    added[res_proposition.name].add_producer(action)
+                else:
+                    # If it doesn't exist let's create new instance for this level - maybe not needed, not sure how formed in the first place
+                    added[res_proposition.name] = Proposition(res_proposition.name)
+                    added[res_proposition.name].add_producer(action)
+                    
+        # Finished going over all the propositions that will need to be in the layer, all have updated producer list
+        for proposition in added.values():
+            self.proposition_layer.add_proposition(proposition)
+
 
     def update_mutex_proposition(self):
         """
@@ -160,4 +205,12 @@ def mutex_propositions(prop1, prop2, mutex_actions_list):
     You might want to use this function:
     prop1.get_producers() returns the set of all the possible actions in the layer that have prop1 on their add list
     """
-    "*** YOUR CODE HERE ***"
+    producers1 = Proposition.get_producers(prop1)
+    producers2 = Proposition.get_producers(prop2)
+
+    for action_produce_1 in producers1:
+        for action_produce_2 in producers2:
+            if Pair(action_produce_1, action_produce_2) not in mutex_actions_list:
+                return False
+
+    return True
