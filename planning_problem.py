@@ -67,7 +67,7 @@ class PlanningProblem:
         "*** YOUR CODE HERE ***"
         all_successors = []
         for act in self.actions:
-            if act.all_preconds_in_list(state):
+            if act.all_preconds_in_list(state) and not act.is_noop():
                 successor = set(act.get_add()).union(set(state))
                 successor = frozenset(successor.difference(act.get_delete()))
                 all_successors.append((successor, act, 1))
@@ -155,14 +155,13 @@ def level_sum(state, planning_problem):
     while True:
         this_lvl = len(graph) - 1
         propositions = graph[-1].get_proposition_layer().get_propositions()
-        for sg in subgoals:
-            if sg in propositions:
+        for pr in propositions:
+            if pr in subgoals:
                 sum_of_subgoals += this_lvl
-                subgoals.remove(sg)
-
-        # check if reached goal
-        if planning_problem.is_goal_state(propositions):
-            return sum_of_subgoals + this_lvl
+                subgoals.remove(pr)
+        # check if we are done
+        if len(subgoals) == 0:
+            return sum_of_subgoals
         # check if we are stuck
         if is_fixed(graph, len(graph) - 1):
             return float('inf')
