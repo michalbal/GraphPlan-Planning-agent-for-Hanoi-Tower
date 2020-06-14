@@ -187,7 +187,7 @@ def a_star_search(problem, heuristic=null_heuristic):
                 fringe.push(
                     Node(succ, accumulated_cost, current_node.path, action),
                     accumulated_cost + heuristic_cost)
-    return []
+    return None
 
 
 # Abbreviations
